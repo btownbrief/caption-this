@@ -1,0 +1,48 @@
+name: Pending photo notifications
+
+# Every 2 hours: if reader photos are waiting for review, open a GitHub
+# issue (GitHub emails the repo owner about new issues — that's the
+# notification). When the queue is clear again, close the issue.
+
+on:
+  schedule:
+    - cron: '23 */2 * * *'
+  workflow_dispatch: {}
+
+permissions:
+  issues: write
+
+env:
+  SUPABASE_URL: https://jnouvwxomrcffqwilqkq.supabase.co
+  SUPABASE_ANON_KEY: sb_publishable_RkMJQopffWlV6DSwCRkndQ_Xw6GJMf3
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check pending count and manage notification issue
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          set -euo pipefail
+          COUNT=$(curl -fsS -X POST "$SUPABASE_URL/rest/v1/rpc/get_pending_count" \
+            -H "apikey: $SUPABASE_ANON_KEY" -H "Content-Type: application/json" -d '{}')
+          echo "Pending photos: $COUNT"
+          gh label create photo-approval --color FBCA04 \
+            --description "Reader photos waiting for review" 2>/dev/null || true
+          ISSUE=$(gh issue list --label photo-approval --state open \
+            --json number --jq '.[0].number // empty')
+          if [ "$COUNT" -gt 0 ] && [ -z "$ISSUE" ]; then
+            gh issue create --label photo-approval \
+              --title "📸 $COUNT photo(s) waiting for approval" \
+              --body "Reader-submitted photo(s) are waiting in the review queue.
+
+**Review them here → https://btownbrief.github.io/caption-this/admin.html**
+
+This issue closes itself automatically once the queue is clear."
+          elif [ "$COUNT" -eq 0 ] && [ -n "$ISSUE" ]; then
+            gh issue close "$ISSUE" --comment "Queue is clear 🎉"
+          else
+            echo "Nothing to do."
+          fi

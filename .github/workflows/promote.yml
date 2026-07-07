@@ -1,0 +1,26 @@
+name: Weekly round promotion
+
+# Monday mornings (Eastern): close last week's round and promote the oldest
+# approved photo to live. The game also self-heals on every page load
+# (get_current_round runs the same advance), so this is belt-and-suspenders.
+
+on:
+  schedule:
+    # 10:07 UTC = 6:07 EDT / 5:07 EST every Monday
+    - cron: '7 10 * * 1'
+  workflow_dispatch: {}
+
+env:
+  SUPABASE_URL: https://jnouvwxomrcffqwilqkq.supabase.co
+  SUPABASE_ANON_KEY: sb_publishable_RkMJQopffWlV6DSwCRkndQ_Xw6GJMf3
+
+jobs:
+  promote:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Advance rounds
+        run: |
+          set -euo pipefail
+          curl -fsS -X POST "$SUPABASE_URL/rest/v1/rpc/advance_rounds" \
+            -H "apikey: $SUPABASE_ANON_KEY" -H "Content-Type: application/json" -d '{}'
+          echo "Rounds advanced."

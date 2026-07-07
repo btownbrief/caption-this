@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#14212e">
+<title>CAPTION THIS — Btown's Weekly Caption Contest</title>
+<meta name="description" content="One Burlington photo a week. Write the caption, swipe on everyone else's, and the winner runs in the Btown Brief.">
+<meta property="og:title" content="CAPTION THIS — Btown's Weekly Caption Contest">
+<meta property="og:description" content="One Burlington photo a week. Write the caption, swipe on everyone else's, and the winner runs in the Btown Brief.">
+<meta property="og:image" content="https://btownbrief.github.io/caption-this/og-image.png">
+<meta property="og:url" content="https://btownbrief.github.io/caption-this/">
+<meta property="og:type" content="website">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="icon-180.png">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div id="app">
+  <header id="topbar">
+    <div id="logo">💬 CAPTION <span>THIS</span></div>
+    <div id="week-chip"></div>
+  </header>
+
+  <main id="views">
+    <!-- THIS WEEK -->
+    <section id="view-week" class="view">
+      <div id="round-loading" class="notice">Loading this week's photo…</div>
+
+      <div id="round-none" class="notice hidden">
+        <div class="big">📭</div>
+        <p>No photo is live right now — a new round starts Monday morning.</p>
+        <p>Got a great Burlington shot? <button class="linkish" data-goto="submit">Submit a photo</button> for a future week!</p>
+      </div>
+
+      <!-- caption phase -->
+      <div id="round-caption" class="hidden">
+        <div class="phase-banner">✍️ Captions open · voting starts Wed noon</div>
+        <figure class="photo-frame">
+          <img id="caption-photo" alt="This week's caption contest photo">
+          <figcaption id="caption-credit"></figcaption>
+        </figure>
+        <div class="deadline" id="caption-deadline"></div>
+        <form id="caption-form">
+          <textarea id="caption-text" maxlength="140" rows="3"
+            placeholder="Write the funniest caption in Chittenden County…" required></textarea>
+          <div class="form-row">
+            <span id="caption-chars">140</span>
+            <button type="submit" class="btn primary" id="caption-submit">Submit caption</button>
+          </div>
+        </form>
+        <div id="caption-done" class="notice mini hidden">
+          ✅ Caption in! You can edit it until voting starts — just submit again.
+        </div>
+        <div class="hint" id="caption-count-line"></div>
+      </div>
+
+      <!-- vote phase -->
+      <div id="round-vote" class="hidden">
+        <div class="phase-banner vote">🔥 Voting is ON · results Monday</div>
+        <div id="deck-wrap">
+          <div id="deck"></div>
+          <div id="deck-empty" class="notice hidden">
+            <div class="big">🎉</div>
+            <p>You've judged them all. Results crown a winner Monday morning!</p>
+          </div>
+        </div>
+        <div id="vote-controls">
+          <button class="swipe-btn nope" id="btn-nope" aria-label="Thumbs down">👎</button>
+          <button class="swipe-btn undo" id="btn-undo" aria-label="Undo last vote" disabled>↩️</button>
+          <button class="swipe-btn yep" id="btn-yep" aria-label="Thumbs up">👍</button>
+        </div>
+        <div id="vote-progress"></div>
+        <div class="hint">Swipe right 👍 if it's a keeper, left 👎 if it's a groaner.</div>
+      </div>
+
+      <!-- promoted late: round starts Monday -->
+      <div id="round-upcoming" class="notice hidden">
+        <div class="big">🗓️</div>
+        <p>The next round kicks off <strong>Monday at midnight</strong>. Come back then to caption it!</p>
+      </div>
+    </section>
+
+    <!-- RESULTS -->
+    <section id="view-results" class="view hidden">
+      <div id="results-none" class="notice hidden">
+        <div class="big">🏆</div>
+        <p>No finished rounds yet — the first winner gets crowned after the first full week of voting.</p>
+      </div>
+      <div id="results-body" class="hidden">
+        <h2 class="section-title">Last week's winner</h2>
+        <figure class="photo-frame">
+          <img id="results-photo" alt="Last week's contest photo">
+          <figcaption id="results-credit"></figcaption>
+        </figure>
+        <div id="results-stats"></div>
+        <ol id="results-list"></ol>
+      </div>
+    </section>
+
+    <!-- SUBMIT A PHOTO -->
+    <section id="view-submit" class="view hidden">
+      <h2 class="section-title">Submit a photo</h2>
+      <p class="hint">See something around Burlington that's begging for a caption? Send it in — if it's chosen, it becomes a future week's contest.</p>
+      <label id="photo-drop" for="photo-input">
+        <input type="file" id="photo-input" accept="image/*">
+        <div id="photo-drop-inner">
+          <div class="big">📷</div>
+          <div>Tap to choose or take a photo</div>
+        </div>
+        <img id="photo-preview" class="hidden" alt="Your photo, ready to submit">
+      </label>
+      <input type="text" id="photo-credit" maxlength="120"
+        placeholder="One line: what/where is this? (+ your name for credit)">
+      <button class="btn primary" id="photo-submit" disabled>Send it in 🚀</button>
+      <div id="photo-status" class="hint"></div>
+    </section>
+  </main>
+
+  <nav id="tabbar">
+    <button class="tab sel" data-tab="week"><span>📸</span>This Week</button>
+    <button class="tab" data-tab="results"><span>🏆</span>Results</button>
+    <button class="tab" data-tab="submit"><span>➕</span>Submit a Photo</button>
+  </nav>
+
+  <footer id="foot">
+    A Btown Games production · <a href="https://www.btownbrief.com" target="_blank" rel="noopener">Read the Btown Brief →</a>
+  </footer>
+
+  <!-- first-timer name picker (shared arcade identity) -->
+  <div id="name-modal" class="modal hidden">
+    <div class="modal-card">
+      <h3>What should we call you?</h3>
+      <p class="hint">Your name appears with your caption — and it's the same name you use on every Btown Games leaderboard.</p>
+      <input id="name-input" maxlength="20" placeholder="Your name" autocomplete="off">
+      <button class="btn primary" id="name-save">That's me</button>
+    </div>
+  </div>
+
+  <div id="toast" class="hidden"></div>
+</div>
+<script type="module" src="js/main.js"></script>
+</body>
+</html>

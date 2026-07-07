@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#14212e">
+<title>CAPTION THIS — Editor's Desk</title>
+<meta name="robots" content="noindex, nofollow">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="style.css">
+</head>
+<body class="admin">
+<div id="app">
+  <header id="topbar">
+    <div id="logo">🗝️ EDITOR'S <span>DESK</span></div>
+    <button class="linkish" id="lock-btn">lock</button>
+  </header>
+
+  <main id="views">
+    <!-- passphrase gate -->
+    <section id="gate" class="view">
+      <div class="notice">
+        <div class="big">🔐</div>
+        <p>Editor access only.</p>
+      </div>
+      <input type="password" id="pass-input" placeholder="Admin passphrase" autocomplete="current-password">
+      <div style="height:10px"></div>
+      <button class="btn primary" id="pass-go" style="width:100%">Unlock</button>
+      <div class="hint" id="gate-status"></div>
+    </section>
+
+    <!-- dashboard -->
+    <section id="dash" class="view hidden">
+      <div class="admin-section">
+        <h2 class="section-title">📸 Pending photos <span class="badge hidden" id="pending-badge"></span></h2>
+        <div id="pending-list"></div>
+        <div class="hint hidden" id="pending-empty">Queue is clear — nothing waiting. ☕</div>
+      </div>
+
+      <div class="admin-section">
+        <h2 class="section-title">🟢 Live round</h2>
+        <div id="live-card"></div>
+        <div class="admin-actions" id="live-actions">
+          <button class="btn ghost" id="btn-open-voting">Close captions → start voting</button>
+          <button class="btn danger" id="btn-end-round">End round now</button>
+        </div>
+      </div>
+
+      <div class="admin-section">
+        <h2 class="section-title">📋 Up next (approved queue)</h2>
+        <div id="queue-list"></div>
+        <div class="hint hidden" id="queue-empty">Queue is empty — approve some photos so Monday has a star. 😬</div>
+      </div>
+
+      <div class="admin-section">
+        <h2 class="section-title">🧹 Captions on the live photo</h2>
+        <div id="caption-list"></div>
+        <div class="hint hidden" id="caption-empty">No captions yet.</div>
+      </div>
+
+      <button class="btn ghost" id="refresh-btn" style="width:100%">↻ Refresh</button>
+    </section>
+  </main>
+
+  <footer id="foot">
+    A Btown Games production · <a href="index.html">→ back to the game</a>
+  </footer>
+  <div id="toast" class="hidden"></div>
+</div>
+<script type="module" src="js/admin.js"></script>
+</body>
+</html>
