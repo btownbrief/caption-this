@@ -34,13 +34,13 @@ jobs:
           ISSUE=$(gh issue list --label photo-approval --state open \
             --json number --jq '.[0].number // empty')
           if [ "$COUNT" -gt 0 ] && [ -z "$ISSUE" ]; then
+            BODY=$(printf '%s\n\n%s\n\n%s' \
+              "Reader-submitted photo(s) are waiting in the review queue." \
+              "**Review them here → https://btownbrief.github.io/caption-this/admin.html**" \
+              "This issue closes itself automatically once the queue is clear.")
             gh issue create --label photo-approval \
               --title "📸 $COUNT photo(s) waiting for approval" \
-              --body "Reader-submitted photo(s) are waiting in the review queue.
-
-**Review them here → https://btownbrief.github.io/caption-this/admin.html**
-
-This issue closes itself automatically once the queue is clear."
+              --body "$BODY"
           elif [ "$COUNT" -eq 0 ] && [ -n "$ISSUE" ]; then
             gh issue close "$ISSUE" --comment "Queue is clear 🎉"
           else
