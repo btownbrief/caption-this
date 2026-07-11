@@ -186,7 +186,7 @@ async function loadResults() {
     if (i === 0) {
       const tag = document.createElement('div');
       tag.className = 'winner-tag';
-      tag.textContent = '🏆 WINNER · as seen in the Btown Brief';
+      tag.textContent = '🏆 WINNER · as seen in the BTown Brief';
       body.appendChild(tag);
     }
     const text = document.createElement('div');

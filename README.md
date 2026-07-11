@@ -1,6 +1,6 @@
 # 💬 CAPTION THIS
 
-Btown's weekly community caption contest — part of the [Btown Games](https://btownbrief.github.io) arcade from the [Btown Brief](https://www.btownbrief.com).
+Btown's weekly community caption contest — part of the [Btown Games](https://btownbrief.github.io) arcade from the [BTown Brief](https://www.btownbrief.com).
 
 **Play it: https://btownbrief.github.io/caption-this/**
 
