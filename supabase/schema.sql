@@ -17,7 +17,9 @@
 --   advance_rounds(), which is called by every get_current_round() AND by
 --   a Monday-morning GitHub Action — zero maintenance.
 
-create extension if not exists pgcrypto;
+-- Supabase keeps extensions in the "extensions" schema, and every function
+-- below pins search_path=public, so pgcrypto calls must be schema-qualified.
+create extension if not exists pgcrypto with schema extensions;
 
 -- ---------------------------------------------------------------- tables
 
@@ -63,10 +65,20 @@ create table if not exists public.admin_config (
   pass_hash text not null
 );
 
--- ⚠️⚠️⚠️ EDIT THIS LINE: set your admin passphrase (then run the file) ⚠️⚠️⚠️
+-- Seeds a throwaway passphrase on a FRESH database only. "do nothing" means
+-- re-running this file can never clobber the live passphrase.
+--
+-- Never put the real passphrase in this file — the repo is public. To set or
+-- rotate it, paste this into the Supabase SQL editor instead (bare crypt() is
+-- fine there; only the pinned-search_path functions below need qualifying):
+--
+--   insert into public.admin_config (pass_hash)
+--   values (crypt('your-new-passphrase', gen_salt('bf')))
+--   on conflict (id) do update set pass_hash = excluded.pass_hash;
+--
 insert into public.admin_config (pass_hash)
-values (crypt('CHOOSE_YOUR_ADMIN_PASSPHRASE', gen_salt('bf')))
-on conflict (id) do update set pass_hash = excluded.pass_hash;
+values (extensions.crypt('CHANGE-ME-VIA-SQL-EDITOR', extensions.gen_salt('bf')))
+on conflict (id) do nothing;
 
 -- Lock everything down: anon can only use the functions below.
 alter table public.caption_photos enable row level security;
@@ -103,7 +115,7 @@ create or replace function public.ct_is_admin(p_pass text) returns boolean
 language sql security definer stable set search_path = public as $$
   select exists (
     select 1 from admin_config
-    where pass_hash = crypt(coalesce(p_pass, ''), pass_hash)
+    where pass_hash = extensions.crypt(coalesce(p_pass, ''), pass_hash)
   );
 $$;
 revoke all on function public.ct_is_admin(text) from public, anon, authenticated;
@@ -488,6 +500,7 @@ grant execute on function public.admin_check_pass(text) to anon;
 -- If this statement fails with "must be owner of table objects", create the
 -- same policy in Dashboard → Storage → caption-photos → Policies instead.
 
+drop policy if exists "caption photo submissions" on storage.objects;
 create policy "caption photo submissions"
 on storage.objects for insert to anon
 with check (
