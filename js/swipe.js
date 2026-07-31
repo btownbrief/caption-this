@@ -9,6 +9,8 @@ export function createDeck(deckEl, cards, { photoSrc, onVote, onEmpty, onProgres
   const queue = [...cards];
   let lastVoted = null;     // { card, value } for undo
   let busy = false;
+  let active = true;
+  let settleTimer = null;
 
   function makeCardEl(card) {
     const el = document.createElement('div');
@@ -27,44 +29,58 @@ export function createDeck(deckEl, cards, { photoSrc, onVote, onEmpty, onProgres
     return el;
   }
 
-  function render() {
+  function render({ settleTop = false, animateProgress = false } = {}) {
+    if (!active) return;
     deckEl.textContent = '';
     queue.slice(0, MAX_STACK).forEach((card, i) => {
       const el = makeCardEl(card);
       el.style.zIndex = MAX_STACK - i;
       el.style.transform = `translateY(${i * 10}px) scale(${1 - i * 0.035})`;
       deckEl.prepend(el);
-      if (i === 0) attachDrag(el, card);
+      if (i === 0) {
+        if (settleTop) el.classList.add('spring-in');
+        attachDrag(el, card);
+      }
     });
     if (queue.length === 0) onEmpty?.();
-    onProgress?.();
+    onProgress?.({ animate: animateProgress });
   }
 
   function flyOut(el, value, fromX = 0, fromY = 0) {
     const dir = value > 0 ? 1 : -1;
-    el.style.transition = 'transform .35s ease, opacity .35s ease';
+    el.querySelector(value > 0 ? '.stamp.yep' : '.stamp.nope').classList.add('punch');
+    el.style.transition = 'transform .22s ease-out, opacity .22s ease-out';
     el.style.transform =
       `translate(${dir * (deckEl.clientWidth * 1.3)}px, ${fromY - 40}px) rotate(${dir * 24}deg)`;
     el.style.opacity = '0';
-    setTimeout(() => el.remove(), 360);
   }
 
   async function commit(card, value, el, x = 0, y = 0) {
     if (busy) return;
     busy = true;
-    queue.shift();
-    if (el) flyOut(el, value, x, y);
-    lastVoted = { card, value };
     try {
       await onVote(card.id, value);
+      if (!active) return;
+      queue.shift();
+      lastVoted = { card, value };
+      if (el) flyOut(el, value, x, y);
+      settleTimer = setTimeout(() => {
+        settleTimer = null;
+        if (!active) return;
+        busy = false;
+        render({ settleTop: true, animateProgress: true });
+      }, el ? 225 : 0);
     } catch (e) {
-      // put the card back so the vote isn't silently lost
-      queue.unshift(card);
+      if (!active) return;
       lastVoted = null;
+      if (el) {
+        el.style.transition = 'transform .2s ease-out';
+        el.style.transform = '';
+        el.querySelectorAll('.stamp').forEach((stamp) => { stamp.style.opacity = 0; });
+      }
+      busy = false;
       console.warn(e);
     }
-    busy = false;
-    render();
   }
 
   function attachDrag(el, card) {
@@ -115,13 +131,21 @@ export function createDeck(deckEl, cards, { photoSrc, onVote, onEmpty, onProgres
       if (busy || !lastVoted) return;
       busy = true;
       const { card } = lastVoted;
-      lastVoted = null;
       try {
         await onVote(card.id, 0);      // retract server-side
+        if (!active) return;
+        lastVoted = null;
         queue.unshift(card);
-      } catch (e) { console.warn(e); }
-      busy = false;
-      render();
+        busy = false;
+        render({ animateProgress: true });
+      } catch (e) {
+        busy = false;
+        console.warn(e);
+      }
+    },
+    destroy() {
+      active = false;
+      clearTimeout(settleTimer);
     },
     get canUndo() { return Boolean(lastVoted); },
     get remaining() { return queue.length; },
